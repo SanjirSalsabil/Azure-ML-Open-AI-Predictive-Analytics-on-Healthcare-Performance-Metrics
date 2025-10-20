@@ -10,19 +10,11 @@ What-if/counterfactual analysis follows:
 •	Average inflow (new patients added per month)
 •	Historical trend data used to calculate % growth over time
 
-This comprehensive framework provides:
-1.	Interactive Dashboards: Real-time filtering and visualization
-2.	Simulation Engine: What-if scenario modelling with multiple parameters
-3.	Counterfactual Analysis: Understanding what could have been
-4.	Monte Carlo Simulation: Measures Uncertainty 
-5.	Automated Reporting: Executive summaries and detailed analysis
-6.	ROI Analysis: Business case development for improvements
-
-Full Dashboard: https://claude.ai/public/artifacts/773aa7a4-3217-46ee-97df-105dac78b985 
+Sample Dashboard: https://claude.ai/public/artifacts/773aa7a4-3217-46ee-97df-105dac78b985 
 
 # Features for Scenario Modelling
 
-A. Baseline Capacity Metrics (by Facility-Specialty-RHA) 
+A. Baseline Capacity Metrics (by Facility-Specialty-Area) 
 
 Current Monthly Capacity Formula: Total_Cases / 12 (assuming 1-year historical data)
 Average Case Duration Current average: 94.3 minutes per procedure & varies by specialty (60-154 minutes)
