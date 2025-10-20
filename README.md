@@ -18,7 +18,7 @@ This comprehensive framework provides:
 5.	Automated Reporting: Executive summaries and detailed analysis
 6.	ROI Analysis: Business case development for improvements
 
-Full Dashboard: <img width="468" height="29" alt="image" src="https://github.com/user-attachments/assets/81805500-c880-4410-a971-274987182e8b" />
+Full Dashboard: https://claude.ai/public/artifacts/773aa7a4-3217-46ee-97df-105dac78b985 
 
 # Features for Scenario Modelling
 
