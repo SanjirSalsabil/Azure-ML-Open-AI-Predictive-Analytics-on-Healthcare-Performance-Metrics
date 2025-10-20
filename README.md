@@ -20,12 +20,12 @@ Current Backlog Size: Completed cases as baseline across all combinations
 
 B. Focused on high-volume facilities - Analyzing the top 5 combinations by volume across 55 Facility-Specialty-Area combinations instead of general facility/specialty analysis
 
-i. Total capacity available = Current_Monthly_Capacity × 12 × Scenario_Years 
-ii. New capacity = Current_Monthly_Capacity + Additional_Monthly_Procedures 
-iii. Target_Cases_To_Clear = Current_Backlog × (Backlog_Reduction_Target/100)
-iv. Cases Cleared per Year: (Current_Monthly_Capacity + Additional_Procedures) × 12
-v. Backlog Elimination Timeline: Remaining_Backlog / Annual_Capacity_After_Increase
-vi. Resource Utilization based on Case_Time_Minutes * Staff allocation by facility and specialty
+Total capacity available = Current_Monthly_Capacity × 12 × Scenario_Years,
+New capacity = Current_Monthly_Capacity + Additional_Monthly_Procedures,
+Target_Cases_To_Clear = Current_Backlog × (Backlog_Reduction_Target/100),
+ases Cleared per Year: (Current_Monthly_Capacity + Additional_Procedures) × 12,
+Backlog Elimination Timeline: Remaining_Backlog / Annual_Capacity_After_Increase,
+Resource Utilization based on Case_Time_Minutes * Staff allocation by facility and specialty.
 
 # Current Dataset: Healthcare waitlist data from 250,000+ surgical cases.
 <img width="688" height="899" alt="dataset" src="https://github.com/user-attachments/assets/2a1ffea7-b922-42f3-87ba-743653354c28" />
@@ -127,8 +127,7 @@ What's Driving This Pattern?
 This declining backlog occurs when the rate of surgeries being completed exceeds the rate of new patients being added to the waitlist. Think of it like a bathtub - if water is draining out faster than it's flowing in, the water level drops. The model has learned from historical patterns that this net outflow tends to increase over the coming months.The forecast presents an optimistic outlook for the healthcare system. The model predicts that if current operational trends continue, the surgical backlog will decrease by approximately 6.7% (from 12,776 to 11,915 patients) over the next six months. This represents 861 fewer patients waiting for surgery.
 However, it's important to remember that this prediction assumes that current conditions remain stable. Factors like seasonal variations in patient arrivals, changes in surgical capacity, staff availability, or unexpected events (like we saw with COVID-19) could alter this trajectory. The high R² value (0.998) suggests the model is very confident in these predictions based on historical patterns, but real-world healthcare systems can be subject to sudden changes that historical data might not capture.
 This information would be valuable for hospital administrators to plan resources, allocate surgical time slots, and potentially communicate wait time improvements to patients and stakeholders.
-You've raised an excellent question that gets to the heart of how predictive models work! Let me clarify what I meant, because you're absolutely right to question this.
-<img width="468" height="573" alt="image" src="https://github.com/user-attachments/assets/7c4c1675-bdef-4ce2-b93f-79cc150184b1" />
+
 
 
 
