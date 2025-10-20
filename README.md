@@ -18,7 +18,7 @@ Current Backlog Size: Completed cases as baseline across all combinations
 •	Capacity increase percentage (20%-75%)
 •	Backlog reduction target (50%-100%)
 
-B. Focused on high-volume facilities - Analyzing the top 5 combinations by volume across 55 Facility-Specialty-Area combinations instead of general facility/specialty analysis
+B. Focused on high-volume facilities - Analyzing the top 5 combinations by volume across 15+ Facility-Specialty-Area combinations instead of general facility/specialty analysis
 
 Total capacity available = Current_Monthly_Capacity × 12 × Scenario_Years,
 New capacity = Current_Monthly_Capacity + Additional_Monthly_Procedures,
