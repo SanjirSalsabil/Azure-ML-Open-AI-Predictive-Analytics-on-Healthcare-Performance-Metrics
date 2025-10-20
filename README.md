@@ -42,16 +42,6 @@ The Monthly Surgery Trend below shows only completed surgeries/scheduled/queued 
 # Overview of Monthly Capacity & Projected Backlog Clearance Period
 <img width="788" height="340" alt="Monthly_Surgery_Target" src="https://github.com/user-attachments/assets/045d17a6-5dd0-4189-b351-d7888bf9834e" />
 
-<img width="483" height="172" alt="image" src="https://github.com/user-attachments/assets/c821cabb-a020-4a09-93a7-8526427fc620" />
-
-A compact reference table at the top showing all key metrics for each zone:
-o	Current Backlog
-o	Baseline Capacity
-o	Average Inflow
-o	Extra Needed per Month
-o	Total Required Monthly
-o	Adjusted Required Monthly
-
 ![Dashboard1](https://github.com/user-attachments/assets/970cab3a-3224-43a2-be0f-44e8135c110d)
 
 # Surgeries by Specialty (Departments)
@@ -63,54 +53,43 @@ Azure AI | Machine Learning Studio (Custom Model Selection)
 Deployment with Endpoint Creation
 ![Azure_endpoint](https://github.com/user-attachments/assets/7ab73256-5cb7-4bd4-ab1b-48c1d418076b)
 
-Azure ML Surgical Operations Predictive Models
-MODEL 1: BACKLOG PREDICTION BY SPECIALTY/FACILITY
+![pw_outlook_BAnalytics](https://github.com/user-attachments/assets/36167f7c-19e6-4849-972f-fffe9b60486b)
+
+
+# Azure ML Surgical Operations Predictive Models
+![san_ml](https://github.com/user-attachments/assets/566af710-187a-48f5-b37d-768cd69b886c)
+
+
+## MODEL 1: BACKLOG PREDICTION BY SPECIALTY/FACILITY
+
 Target Variable: Target_Backlog - Number of patients waiting for surgery (queued + scheduled status)
 Technique: XGBoost Regression with synthetic time-series data generation
-Strategy:
-•	Creates training data by projecting current backlogs forward/backward using net monthly flow (inflow - completions)
-•	Groups predictions by specialty and facility
-•	Uses 12 months of synthetic historical data for training
-Key Features:
-•	Current backlog count
-•	Average monthly completed surgeries
-•	Average monthly patient inflow
-•	Net monthly flow (inflow - completions)
-•	Encoded specialty and facility
-•	Time features (year, month, quarter)
-•	Months offset from current date
+
 Results:
-•	MAE: 5.19 patients (average prediction error)
 •	R²: 0.998 (model explains 99.8% of variance - excellent fit)
 •	Current total backlog: 12,776 patients
 •	6-month forecast shows decreasing trend (-861 patients by month 6)
-MODEL 2: PATIENT INFLOW PREDICTION
-Target Variable: Daily_Inflow - Number of new patients added to surgical waitlist per day
+
+## MODEL 2: PATIENT INFLOW PREDICTION
+Target Variable: Daily_Inflow - Number of new patients added to the surgical waitlist per day
 Technique: Gradient Boosting Regression with time-series features
+
 Strategy:
 •	Uses historical daily patient arrival patterns
 •	Incorporates lag features and rolling statistics for time-series forecasting
+
 Key Features:
 •	Temporal features (day of week, month, year, quarter)
-•	Lag features (1, 7, 14, 30 days)
 •	Rolling averages and standard deviations (7, 14, 30-day windows)
-Results Interpretation:
-•	MAE: 9.18 patients/day - Predictions are off by ~9 patients daily on average
+
+Results:
 •	R²: 0.921 - Model explains 92.1% of variance (excellent performance)
 •	High R² indicates patient inflow follows predictable patterns
 
-
-
-Our surgical backlog model uses the historical relationship between inflow, completions, and backlog to make predictions. The synthetic training data it creates assumes these relationships stay consistent:
-# The model projects future backlogs using historical net flow patterns
-projected_backlog = current_backlog + (net_flow * months_offset)
-
-
 Model Choice Rationale
-XGBoost (Backlog): Handles non-linear relationships between features well, robust to outliers, good for tabular data with mixed feature types.
-LightGBM (Wait Time): Faster training than XGBoost, better for larger datasets, handles categorical features efficiently. Chosen because wait time data has more records (completed surgeries).
-Gradient Boosting (Inflow): Best for time-series with trend/seasonal patterns. Captures complex temporal dependencies through lag features.
-
+XGBoost (Backlog): Handles non-linear relationships between features, robust to outliers, good for tabular data with mixed feature types.
+LightGBM (Wait Time): Faster training than XGBoost, better for larger datasets, and handles categorical features efficiently. 
+Gradient Boosting (Inflow): Best for time-series forecasting with trend/seasonal patterns. Captures complex temporal dependencies through lag features.
 
 
 What's causing the long waits?"
@@ -118,16 +97,11 @@ What's causing the long waits?"
 •	Case complexity (longer surgeries) correlates with longer waits
 •	Facility imbalances - some at 200+ days average
 
-Current State
-The model shows we currently have 12,776 patients waiting for surgery across all specialties and facilities. This represents patients who are either queued (waiting to be scheduled) or already scheduled but haven't had their surgery yet.
-The Predicted Trend
-Looking at the six-month forecast, we can see a consistent downward trend in the backlog. Each month shows a reduction in the total number of waiting patients, with the changes becoming progressively larger:
-The reduction starts modestly at 175 patients in the first month, but by month six, we're seeing a reduction of 861 patients from the current level. This acceleration in backlog reduction suggests that the system is becoming more efficient at processing patients over time.
-What's Driving This Pattern?
-This declining backlog occurs when the rate of surgeries being completed exceeds the rate of new patients being added to the waitlist. Think of it like a bathtub - if water is draining out faster than it's flowing in, the water level drops. The model has learned from historical patterns that this net outflow tends to increase over the coming months.The forecast presents an optimistic outlook for the healthcare system. The model predicts that if current operational trends continue, the surgical backlog will decrease by approximately 6.7% (from 12,776 to 11,915 patients) over the next six months. This represents 861 fewer patients waiting for surgery.
-However, it's important to remember that this prediction assumes that current conditions remain stable. Factors like seasonal variations in patient arrivals, changes in surgical capacity, staff availability, or unexpected events (like we saw with COVID-19) could alter this trajectory. The high R² value (0.998) suggests the model is very confident in these predictions based on historical patterns, but real-world healthcare systems can be subject to sudden changes that historical data might not capture.
-This information would be valuable for hospital administrators to plan resources, allocate surgical time slots, and potentially communicate wait time improvements to patients and stakeholders.
+Looking at the six-month forecast, we can see a consistent downward trend in the backlog. Each month shows a reduction in the total number of waiting patients, with the changes becoming progressively larger
+The reduction starts modestly at 175 patients in the first month, but by month six, we're seeing a reduction of 861 patients from the current level. 
 
+## Assumptions: 
+Current conditions remain stable. Factors like seasonal variations in patient arrivals, changes in surgical capacity, staff availability, or unexpected events  (COVID-19) could alter this trajectory.
 
 
 
