@@ -48,16 +48,16 @@ The Monthly Surgery Trend below shows only completed surgeries/scheduled/queued 
 ![surgeries by specialty](https://github.com/user-attachments/assets/1ee85c90-c94d-4dc7-b9bb-3d120cb483a7)
 
 Azure AI | Machine Learning Studio (Custom Model Selection)
-![Azure_ai_resource](https://github.com/user-attachments/assets/28995f11-95c1-488c-af41-0188c0b82ae0)
+![san_ml](https://github.com/user-attachments/assets/566af710-187a-48f5-b37d-768cd69b886c)
+
 
 Deployment with Endpoint Creation
 ![Azure_endpoint](https://github.com/user-attachments/assets/7ab73256-5cb7-4bd4-ab1b-48c1d418076b)
 
-![pw_outlook_BAnalytics](https://github.com/user-attachments/assets/36167f7c-19e6-4849-972f-fffe9b60486b)
 
 
-# Azure ML Surgical Operations Predictive Models
-![san_ml](https://github.com/user-attachments/assets/566af710-187a-48f5-b37d-768cd69b886c)
+# Azure ML Surgical Operations Predictive Models (Customized)
+![Azure_ai_resource](https://github.com/user-attachments/assets/28995f11-95c1-488c-af41-0188c0b82ae0)
 
 
 ## MODEL 1: BACKLOG PREDICTION BY SPECIALTY/FACILITY
@@ -101,7 +101,7 @@ Looking at the six-month forecast, we can see a consistent downward trend in the
 The reduction starts modestly at 175 patients in the first month, but by month six, we're seeing a reduction of 861 patients from the current level. 
 
 ## Assumptions: 
-Current conditions remain stable. Factors like seasonal variations in patient arrivals, changes in surgical capacity, staff availability, or unexpected events  (COVID-19) could alter this trajectory.
+Current conditions remain stable. Factors such as seasonal variations in patient arrivals, changes in surgical capacity, staff availability, or unexpected events (e.g., COVID-19) could alter this trajectory.
 
 
 
