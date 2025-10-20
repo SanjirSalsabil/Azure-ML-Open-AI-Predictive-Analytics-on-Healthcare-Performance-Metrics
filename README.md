@@ -1,5 +1,5 @@
 # Azure-ML-Open-AI-Predictive-Analytics-on-Healthcare-Performance-Metrics
-This analysis provides specific scenarios to reduce/stabilize surgical waitlist growth for Healthcare. Key focus: Forecast the procedure increase ($10k-15k$ more/year) needed to achieve waitlist reduction targets (e.g., $25%, 50%$, or elimination within 2-5 years). Projections are broken down by Area, Facility, Specialty, and Patient Service Type
+This analysis provides specific scenarios to reduce/stabilize surgical waitlist growth for Healthcare. Key focus: Forecast the procedure increase ($10k-15k$ more/year) needed to achieve waitlist reduction targets (e.g., 25%, 50%, or elimination within 2-5 years). Projections are broken down by Area, Facility, Specialty, and Patient Service Type
 
 # What / if Analysis 
 ![waitlist_correct_new](https://github.com/user-attachments/assets/c731949a-d001-41ea-814f-5e1fc0c88aa9)
@@ -18,7 +18,7 @@ This comprehensive framework provides:
 5.	Automated Reporting: Executive summaries and detailed analysis
 6.	ROI Analysis: Business case development for improvements
 
-Full Dashboard: https://claude.ai/public/artifacts/773aa7a4-3217-46ee-97df-105dac78b985 <img width="468" height="29" alt="image" src="https://github.com/user-attachments/assets/81805500-c880-4410-a971-274987182e8b" />
+Full Dashboard: <img width="468" height="29" alt="image" src="https://github.com/user-attachments/assets/81805500-c880-4410-a971-274987182e8b" />
 
 # Features for Scenario Modelling
 
