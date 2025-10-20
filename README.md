@@ -4,12 +4,6 @@ This analysis provides specific scenarios to reduce/stabilize surgical waitlist 
 # What / if Analysis 
 ![waitlist_correct_new](https://github.com/user-attachments/assets/c731949a-d001-41ea-814f-5e1fc0c88aa9)
 
-What-if/counterfactual analysis follows:
-•	Current backlog counts (total and by RHA/facility/specialty/patient type)
-•	Baseline surgical capacity (average completed surgeries per month)
-•	Average inflow (new patients added per month)
-•	Historical trend data used to calculate % growth over time
-
 Sample Dashboard: https://claude.ai/public/artifacts/773aa7a4-3217-46ee-97df-105dac78b985 
 
 # Features for Scenario Modelling
