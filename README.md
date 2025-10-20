@@ -1,7 +1,7 @@
 # Azure-ML-Open-AI-Predictive-Analytics-on-Healthcare-Performance-Metrics
 This analysis provides specific scenarios to reduce/stabilize surgical waitlist growth for Healthcare. Key focus: Forecast the procedure increase ($10k-15k$ more/year) needed to achieve waitlist reduction targets (e.g., $25%, 50%$, or elimination within 2-5 years). Projections are broken down by Area, Facility, Specialty, and Patient Service Type
 
-# Azure ML What / if Analysis Dashboard
+# What / if Analysis 
 ![waitlist_correct_new](https://github.com/user-attachments/assets/c731949a-d001-41ea-814f-5e1fc0c88aa9)
 
 What-if/counterfactual analysis follows:
@@ -20,11 +20,6 @@ This comprehensive framework provides:
 4.	Monte Carlo Simulation: Measures Uncertainty 
 5.	Automated Reporting: Executive summaries and detailed analysis
 6.	ROI Analysis: Business case development for improvements
-<img width="468" height="318" alt="image" src="https://github.com/user-attachments/assets/7ec167f6-ca0d-425d-ad53-5dc8f4b0d257" />
-
-
-![Azure_ML_Vs_studio](https://github.com/user-attachments/assets/4e8059cb-92a4-4cab-9d1c-1ae94f3e12dc)
-
 
 # Current Dataset: Healthcare waitlist data from 250,000+ surgical cases.
 <img width="688" height="899" alt="dataset" src="https://github.com/user-attachments/assets/2a1ffea7-b922-42f3-87ba-743653354c28" />
