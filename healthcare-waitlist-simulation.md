@@ -1589,13 +1589,19 @@ print("2. Perform counterfactual analysis on historical data")
 print("3. Generate reports for stakeholders")
 print("4. Export results for further analysis")
 ```
-## Future Scope
+## Current Scope
 
+1. Predictive Modeling - Time Series Forecasting (ARIMA/SARIMA) to predict future waitlist growth
+2. Able to predict increase in number of surgical procedures and it's impact on overall performance
+
+
+## Future Scope
 To extend this framework:
-1. Add machine learning models for wait time prediction
-2. Integrate with real-time data feeds
+1. Fine-tuned machine learning models for more robust use case scenarios on wait time prediction
+2. Integrate with real-time data feeds on base line capacity, process and resource allocations
 3. Implement more sophisticated scheduling algorithms
 4. Add cost-benefit analysis modules
 5. Create automated alerting for performance degradation
+6. Expand Data Sources for a more comprehensive analysis.
 
 This toolkit enables healthcare administrators to make data-driven decisions for improving surgical wait times and patient inflow.
