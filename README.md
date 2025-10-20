@@ -1,0 +1,2 @@
+# Azure-ML-Open-AI-Predictive-Analytics-on-Healthcare-Performance-Metrics
+This analysis provides specific scenarios to reduce / stabilize surgical waitlist growth for Healthcare. Key focus: Forecast the procedure increase ($10k-15k$ more/year) needed to achieve waitlist reduction targets (e.g., $25%, 50%$, or elimination within 2-5 years). Projections are broken down by Area, Facility, Specialty, and PatientService Type
