@@ -1,0 +1,787 @@
+
+# ===== comprehensive what-if/counterfactual analysis for surgical waitlist reduction strategies across healthcare facilities =====
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import ipywidgets as widgets
+from IPython.display import display, HTML
+from datetime import datetime
+import warnings
+warnings.filterwarnings('ignore')
+
+# Set plotting style
+plt.style.use('seaborn-v0_8')
+sns.set_palette("husl")
+
+# ===== DATA LOADING AND PREPROCESSING =====
+print("Loading healthcare waitlist data...")
+
+df = pd.read_csv("azureml://subscriptions/0ded687b-997b-4159-acf3-9c82e7352f8c/resourcegroups/Sanjir.Salsabil-rg/workspaces/rg-san-ai/datastores/workspaceblobstore/paths/UI/2025-05-27_180409_UTC/latest_rawdata.csv", 
+                 encoding="utf-8-sig", low_memory=False)
+
+print(f"✓ Dataset loaded: {df.shape[0]:,} records, {df.shape[1]} columns")
+print(f"✓ Unique Patients: {df['Patient_Id'].nunique():,}")
+print(f"✓ Unique Facilities: {df['Facility'].nunique()}")
+print(f"✓ Unique Specialties: {df['Specialty'].nunique()}")
+
+# Number of rows: 14533
+# Number of columns: 59
+
+
+# Sample data row:
+# {
+#   "Id_PK": 1049934,
+#   "Status": "Completed",
+#   "Primary": true,
+#   "Specialty": "General Surgery",
+#   "Provider Specialty": "General Surgery",
+#   "RHA_Procedure": "REPAIR INCISIONAL HERNIA",
+#   "Prov_Procedure": "INCISIONAL OR VENTRAL HERNIA",
+#   "Procedure Description": "MESH REPAIR INCISIONAL HERNIA DIABETIC NON-INSULIN DEPENDENT",
+#   "Prov_Procedure_Code": "GEN188",
+#   "Scheduling_ID": 401448,
+#   "Post_Operative_Id": 413984,
+#   "Emergency_Case": false,
+#   "Acuity_Code": "III",
+#   "Score": 51.16,
+#   "Recommend_Surgery_By_Date": "31/03/2019 0:00",
+#   "Prioritization_Date": "09/01/2019 12:10",
+#   "Prioritization_Tool_Id_FK": 37,
+#   "Prioritization_Tool_Name": "General Surgery (Jul 2011)",
+#   "SuspectedProvenCancer": false,
+#   "isCardiacInpatient": false,
+#   "Category": "Prioritized",
+#   "Decision_Date_For_Surgery": "03/01/2019 0:00",
+#   "Date_Received": "09/01/2019 0:00",
+#   "Date_First_Seen_By_Received": "03/01/2019 0:00",
+#   "Date_Referral_Received_By_Surgeon": "20/09/2018 0:00",
+#   "Patient_Id": 69310,
+#   "Patient_Age": 61,
+#   "Patient_Age_Group": "18-59",
+#   "Scheduled_Surgery Date": "11/03/2019 0:00",
+#   "Surgery_Completed_Date": "11/03/2019 0:00",
+#   "unavailable time": 0,
+#   "Patient_Type": "Day Surgery",
+#   "Anesthesia_Type": "GENERAL-with anaesthesiologist",
+#   "Cancer_Related": "NO",
+#   "Facility": "Dr. Everett Chalmers Regional Hospital",
+#   "RHA": "Horizon Health Network - Zone 3",
+#   "Days_Waiting_FROM_Referral_Received_Date_TO_First_Visit_To_Surgeon": 105,
+#   "Days_Waiting_FROM_First_Visit_To_Surgeon_TO_Decision_For_Surgery_Date": 0,
+#   "Days_Waiting_FROM_Decision_For_Surgery_Date_TO_Received_By_OR_Booking_Date": 6,
+#   "Days_Waiting_FROM_Decision_For_Surgery_Date_TO_Consent_Date": 0,
+#   "Days_Waiting_FROM_Consent_Date_TO_Received_By_OR_Booking_Date": 6,
+#   "Days_Waiting_FROM_Received_By_OR_Booking_Date_TO_Entered_In_SAR_By_OR_Booking_Date": 0,
+#   "Days_Waiting_FROM_Received_By_OR_Booking_Date_TO_First_Offered_Date": 61,
+#   "Days_Waiting_FROM_First_Offered_Date_TO_Date_Of_Surgery": 0,
+#   "Days_Waiting_FROM_Received_By_OR_Booking_Date_TO_Date_Of_Surgery": 61,
+#   "Days_Waiting_FROM_Decision_Date_For_Surgery_TO_Date_Of_Surgery": 67,
+#   "Case_Time_Minutes": 73,
+#   "Arrival_DaySurgery_Time": "01/01/1753 11:35:00 AM",
+#   "Leave_DaySurgery_Time": "01/01/1753 2:51:00 PM",
+#   "Enter_OR_Time": "01/01/1753 2:51:00 PM",
+#   "Anesthesia_Start_Time": "01/01/1753 2:51:00 PM",
+#   "Patient_ReadyFor_Surgeon_Time": "01/01/1753 3:03:00 PM",
+#   "Surgeon_Start_Time": "01/01/1753 3:10:00 PM",
+#   "Surgeon_End_Time": "01/01/1753 3:30:00 PM",
+#   "Patient_ExitsOR_Time": "01/01/1753 3:43:00 PM",
+#   "Patient_ReadyToLeave_PACU_Time": "01/01/1753 4:30:00 PM",
+#   "Patient_Exits_PACU_Time": "01/01/1753 4:30:00 PM",
+#   "Patient_Exits_DaySurgery_Time": "01/01/1753 5:30:00 PM",
+#   "Setup_Start_Time": "01/01/1753 2:35:00 PM"
+# }
+# ===== DATA CLEANING =====
+print("\nCleaning data...")
+
+# Convert date columns to datetime
+date_columns = ['Surgery_Completed_Date', 'Decision_Date_For_Surgery', 'Received_By_OR_Booking_Date']
+for col in date_columns:
+    if col in df.columns:
+        df[col] = pd.to_datetime(df[col], errors='coerce')
+
+# Display date range if available
+if 'Surgery_Completed_Date' in df.columns:
+    valid_dates = df['Surgery_Completed_Date'].dropna()
+    if len(valid_dates) > 0:
+        print(f"✓ Date range: {valid_dates.min().strftime('%Y-%m-%d')} to {valid_dates.max().strftime('%Y-%m-%d')}")
+
+# Clean and prepare key columns
+df['Facility'] = df['Facility'].fillna('Unknown')
+df['Specialty'] = df['Specialty'].fillna('Unknown')
+df['RHA'] = df['RHA'].fillna('Unknown')
+
+# Convert wait time columns to numeric
+wait_columns = [
+    'Days_Waiting_FROM_Decision_Date_For_Surgery_TO_Date_Of_Surgery',
+    'Days_Waiting_FROM_Received_By_OR_Booking_Date_TO_Date_Of_Surgery',
+    'Case_Time_Minutes'
+]
+
+for col in wait_columns:
+    if col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+
+# Remove outliers and invalid data
+original_count = len(df)
+df = df[df['Days_Waiting_FROM_Decision_Date_For_Surgery_TO_Date_Of_Surgery'] >= 0]
+df = df[df['Days_Waiting_FROM_Decision_Date_For_Surgery_TO_Date_Of_Surgery'] <= 2000]
+df = df.dropna(subset=['Days_Waiting_FROM_Decision_Date_For_Surgery_TO_Date_Of_Surgery'])
+
+print(f"✓ Data cleaned: {len(df):,} records remaining (removed {original_count - len(df):,} invalid records)")
+
+# ===== BASELINE ANALYSIS =====
+def create_enhanced_baseline():
+    """Create comprehensive baseline facility-specialty-RHA analysis"""
+    
+    baseline = df.groupby(['Facility', 'Specialty', 'RHA']).agg({
+        'Id_PK': 'count',
+        'Days_Waiting_FROM_Decision_Date_For_Surgery_TO_Date_Of_Surgery': ['mean', 'median', 'std', 'max'],
+        'Case_Time_Minutes': ['mean', 'sum'],
+        'Patient_Age': 'mean',
+        'Cancer_Related': lambda x: (x == 'YES').sum() if 'Cancer_Related' in df.columns else 0,
+        'Emergency_Case': lambda x: x.sum() if 'Emergency_Case' in df.columns else 0
+    }).round(2)
+    
+    # Flatten column names
+    baseline.columns = ['current_cases', 'avg_wait_days', 'median_wait_days', 'std_wait_days', 
+                       'max_wait_days', 'avg_case_minutes', 'total_case_minutes',
+                       'avg_patient_age', 'cancer_cases', 'emergency_cases']
+    
+    baseline = baseline.reset_index()
+    
+    # Calculate percentiles for wait times
+    baseline['wait_time_percentile_90'] = df.groupby(['Facility', 'Specialty', 'RHA'])[
+        'Days_Waiting_FROM_Decision_Date_For_Surgery_TO_Date_Of_Surgery'].quantile(0.9).values
+    
+    # Monthly capacity estimation (assuming 1 year of data)
+    baseline['monthly_capacity'] = np.ceil(baseline['current_cases'] / 12).astype(int)
+    
+    # Calculate utilization metrics
+    baseline['total_hours'] = baseline['total_case_minutes'] / 60
+    baseline['avg_hours_per_case'] = baseline['avg_case_minutes'] / 60
+    
+    # Priority classification
+    baseline['is_critical_bottleneck'] = baseline['avg_wait_days'] > 200
+    baseline['is_high_volume'] = baseline['current_cases'] > 1000
+    baseline['is_high_variance'] = baseline['std_wait_days'] > 100
+    
+    baseline['priority'] = baseline.apply(lambda x: 
+        'Critical' if x['is_critical_bottleneck'] else
+        'High Volume' if x['is_high_volume'] else
+        'High Variance' if x['is_high_variance'] else 'Standard', axis=1)
+    
+    # Calculate efficiency score (lower is better)
+    baseline['efficiency_score'] = (
+        baseline['avg_wait_days'] * 0.4 + 
+        baseline['median_wait_days'] * 0.3 + 
+        baseline['std_wait_days'] * 0.3
+    )
+    
+    return baseline.sort_values('current_cases', ascending=False)
+
+print("\nCreating baseline analysis...")
+baseline_data = create_enhanced_baseline()
+
+print(f"✓ Baseline analysis created:")
+print(f"  - {len(baseline_data)} unique Facility-Specialty-RHA combinations")
+print(f"  - {baseline_data['is_critical_bottleneck'].sum()} critical bottlenecks (>200 days avg wait)")
+print(f"  - {baseline_data['is_high_volume'].sum()} high volume areas (>1000 cases)")
+print(f"  - {baseline_data['is_high_variance'].sum()} high variance areas (std >100 days)")
+
+# ===== SIMULATION ENGINE =====
+def calculate_advanced_simulation(baseline_df, years=3, additional_monthly=100, 
+                                capacity_increase_pct=25, backlog_reduction_target=75,
+                                efficiency_improvement_pct=10):
+    """
+    Advanced simulation with multiple scenarios and metrics
+    """
+    results = baseline_df.copy()
+    
+    # Base capacity calculations
+    capacity_multiplier = 1 + (capacity_increase_pct / 100)
+    efficiency_multiplier = 1 - (efficiency_improvement_pct / 100)
+    
+    # New capacity calculations
+    results['new_monthly_capacity'] = np.round(
+        (results['monthly_capacity'] * capacity_multiplier) + additional_monthly
+    ).astype(int)
+    
+    results['total_annual_capacity'] = results['new_monthly_capacity'] * 12
+    results['total_capacity_over_period'] = results['total_annual_capacity'] * years
+    
+    # Efficiency improvements
+    results['new_avg_case_minutes'] = results['avg_case_minutes'] * efficiency_multiplier
+    results['time_saved_per_case'] = results['avg_case_minutes'] - results['new_avg_case_minutes']
+    
+    # Backlog calculations
+    results['current_backlog'] = results['current_cases']
+    results['target_cases_to_clear'] = np.round(
+        results['current_backlog'] * (backlog_reduction_target / 100)
+    ).astype(int)
+    
+    results['remaining_backlog'] = results['current_backlog'] - results['target_cases_to_clear']
+    
+    # Timeline calculations
+    results['monthly_clearance_rate'] = np.maximum(
+        results['new_monthly_capacity'] - results['monthly_capacity'],
+        0
+    )
+    
+    results['months_to_target'] = np.where(
+        results['monthly_clearance_rate'] > 0,
+        np.ceil(results['target_cases_to_clear'] / results['monthly_clearance_rate']),
+        999
+    )
+    results['years_to_target'] = results['months_to_target'] / 12
+    
+    # Wait time projections (non-linear model)
+    results['capacity_ratio'] = results['new_monthly_capacity'] / results['monthly_capacity'].clip(lower=1)
+    
+    # More sophisticated wait time reduction model
+    results['wait_reduction_factor'] = np.minimum(
+        0.8,  # Maximum 80% reduction
+        (results['capacity_ratio'] - 1) * 0.6 + efficiency_improvement_pct / 100 * 0.2
+    )
+    
+    results['estimated_new_wait_days'] = np.maximum(
+        14,  # Minimum 2 weeks wait time
+        results['avg_wait_days'] * (1 - results['wait_reduction_factor'])
+    )
+    
+    results['wait_time_reduction'] = results['avg_wait_days'] - results['estimated_new_wait_days']
+    results['wait_time_reduction_pct'] = (results['wait_time_reduction'] / results['avg_wait_days'].clip(lower=1)) * 100
+    
+    # ROI calculations
+    results['capacity_increase'] = results['new_monthly_capacity'] - results['monthly_capacity']
+    results['annual_additional_procedures'] = results['capacity_increase'] * 12
+    
+    # Cost-benefit metrics
+    results['patients_benefited'] = results['target_cases_to_clear']
+    results['total_days_saved'] = results['patients_benefited'] * results['wait_time_reduction']
+    results['roi_score'] = results['total_days_saved'] / (results['annual_additional_procedures'].clip(lower=1))
+    
+    # Impact scores
+    results['impact_score'] = (
+        results['current_cases'] * 0.3 +
+        results['wait_time_reduction'] * 0.4 +
+        results['roi_score'] * 0.3
+    )
+    
+    return results
+
+# ===== VISUALIZATION FUNCTIONS =====
+def create_comprehensive_wait_chart(results_df):
+    """Enhanced wait time visualization with confidence intervals"""
+    
+    # Select top 20 by impact score
+    top_impact = results_df.nlargest(20, 'impact_score')
+    
+    fig = go.Figure()
+    
+    # Current wait times with error bars
+    fig.add_trace(go.Bar(
+        name='Current Wait Time',
+        x=top_impact.index,
+        y=top_impact['avg_wait_days'],
+        error_y=dict(
+            type='data',
+            array=top_impact['std_wait_days'],
+            visible=True
+        ),
+        marker_color='indianred',
+        text=top_impact['avg_wait_days'].round(0),
+        textposition='outside',
+        customdata=top_impact[['Facility', 'Specialty', 'current_cases']],
+        hovertemplate='<b>%{customdata[0]} - %{customdata[1]}</b><br>' +
+                      'Current wait: %{y:.0f} days<br>' +
+                      'Cases: %{customdata[2]}<br>' +
+                      '<extra></extra>'
+    ))
+    
+    # Projected wait times
+    fig.add_trace(go.Bar(
+        name='Projected Wait Time',
+        x=top_impact.index,
+        y=top_impact['estimated_new_wait_days'],
+        marker_color='mediumseagreen',
+        text=top_impact['estimated_new_wait_days'].round(0),
+        textposition='outside',
+        customdata=top_impact[['wait_time_reduction', 'wait_time_reduction_pct']],
+        hovertemplate='Projected wait: %{y:.0f} days<br>' +
+                      'Reduction: %{customdata[0]:.0f} days (%{customdata[1]:.1f}%)<br>' +
+                      '<extra></extra>'
+    ))
+    
+    # Add target line
+    fig.add_hline(y=182, line_dash="dash", line_color="gray", 
+                  annotation_text="6-month target")
+    
+    fig.update_layout(
+        title={
+            'text': 'Wait Time Impact Analysis - Top 20 by Impact Score',
+            'x': 0.5,
+            'xanchor': 'center'
+        },
+        xaxis_title='Facility-Specialty Index',
+        yaxis_title='Wait Time (Days)',
+        barmode='group',
+        height=600,
+        showlegend=True,
+        hovermode='x unified'
+    )
+    
+    # Update x-axis to show facility names
+    fig.update_xaxes(
+        ticktext=[f"{row['Facility'][:15]}... - {row['Specialty'][:10]}..." 
+                  for _, row in top_impact.iterrows()],
+        tickvals=top_impact.index,
+        tickangle=-45
+    )
+    
+    return fig
+
+def create_roi_heatmap(results_df):
+    """ROI heatmap by facility and specialty"""
+    
+    # Pivot data for heatmap
+    pivot = results_df.pivot_table(
+        values='roi_score',
+        index='Specialty',
+        columns='Facility',
+        aggfunc='mean'
+    )
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=pivot.values,
+        x=pivot.columns,
+        y=pivot.index,
+        colorscale='RdYlGn',
+        text=np.round(pivot.values, 1),
+        texttemplate='%{text}',
+        textfont={"size": 10},
+        hovertemplate='Facility: %{x}<br>Specialty: %{y}<br>ROI Score: %{z:.2f}<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title='Return on Investment Heatmap by Facility and Specialty',
+        xaxis_title='Facility',
+        yaxis_title='Specialty',
+        height=600,
+        xaxis={'tickangle': -45}
+    )
+    
+    return fig
+
+def create_priority_matrix(results_df):
+    """Scatter plot showing priority matrix"""
+    
+    fig = px.scatter(
+        results_df,
+        x='current_cases',
+        y='avg_wait_days',
+        size='impact_score',
+        color='priority',
+        hover_data=['Facility', 'Specialty', 'roi_score', 'years_to_target'],
+        title='Priority Matrix: Volume vs Wait Time',
+        labels={
+            'current_cases': 'Current Case Volume',
+            'avg_wait_days': 'Average Wait Days'
+        },
+        height=600,
+        color_discrete_map={
+            'Critical': '#d62728',
+            'High Volume': '#1f77b4',
+            'High Variance': '#ff7f0e',
+            'Standard': '#2ca02c'
+        }
+    )
+    
+    # Add quadrant lines
+    median_cases = results_df['current_cases'].median()
+    median_wait = results_df['avg_wait_days'].median()
+    
+    fig.add_hline(y=median_wait, line_dash="dash", line_color="gray", opacity=0.5)
+    fig.add_vline(x=median_cases, line_dash="dash", line_color="gray", opacity=0.5)
+    
+    # Add quadrant labels
+    fig.add_annotation(x=median_cases*2, y=median_wait*2, text="High Volume<br>Long Wait",
+                      showarrow=False, bgcolor="rgba(255,255,255,0.8)")
+    fig.add_annotation(x=median_cases/3, y=median_wait*2, text="Low Volume<br>Long Wait",
+                      showarrow=False, bgcolor="rgba(255,255,255,0.8)")
+    
+    return fig
+
+def create_capacity_timeline(results_df):
+    """Timeline visualization for capacity improvements"""
+    
+    # Select critical and high-impact areas
+    critical_areas = results_df[
+        (results_df['priority'].isin(['Critical', 'High Volume'])) | 
+        (results_df['impact_score'] > results_df['impact_score'].quantile(0.8))
+    ].nlargest(15, 'impact_score')
+    
+    fig = go.Figure()
+    
+    # Create timeline bars
+    fig.add_trace(go.Bar(
+        name='Years to Target',
+        y=critical_areas['Facility'] + ' - ' + critical_areas['Specialty'],
+        x=critical_areas['years_to_target'],
+        orientation='h',
+        marker_color=critical_areas['priority'].map({
+            'Critical': '#d62728',
+            'High Volume': '#1f77b4',
+            'High Variance': '#ff7f0e',
+            'Standard': '#2ca02c'
+        }),
+        customdata=critical_areas[['current_cases', 'target_cases_to_clear', 'new_monthly_capacity']],
+        hovertemplate='<b>%{y}</b><br>' +
+                      'Time to target: %{x:.1f} years<br>' +
+                      'Current backlog: %{customdata[0]}<br>' +
+                      'Cases to clear: %{customdata[1]}<br>' +
+                      'New monthly capacity: %{customdata[2]}<br>' +
+                      '<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title='Timeline to Achieve Backlog Reduction Targets',
+        xaxis_title='Years to Target',
+        yaxis_title='Facility - Specialty',
+        height=600,
+        showlegend=False
+    )
+    
+    # Add target line
+    fig.add_vline(x=3, line_dash="dash", line_color="gray", 
+                  annotation_text="3-year target")
+    
+    return fig
+
+# ===== INSIGHTS GENERATION =====
+def generate_insights(results_df, params):
+    """Generate actionable insights from simulation results"""
+    
+    insights = []
+    
+    # Overall impact
+    total_patients = results_df['patients_benefited'].sum()
+    avg_wait_reduction = results_df['wait_time_reduction'].mean()
+    total_capacity_increase = results_df['capacity_increase'].sum()
+    
+    insights.append(f"🎯 **Overall Impact**: This scenario would benefit {total_patients:,} patients with an average wait time reduction of {avg_wait_reduction:.0f} days")
+    
+    # Critical bottlenecks
+    critical = results_df[results_df['is_critical_bottleneck']]
+    if len(critical) > 0:
+        worst = critical.nlargest(1, 'avg_wait_days').iloc[0]
+        insights.append(f"⚠️ **Critical Bottleneck**: {worst['Facility']} - {worst['Specialty']} has the longest wait at {worst['avg_wait_days']:.0f} days")
+    
+    # Best ROI
+    best_roi = results_df.nlargest(3, 'roi_score')
+    if len(best_roi) > 0:
+        top_roi = best_roi.iloc[0]
+        insights.append(f"💰 **Best ROI**: {top_roi['Facility']} - {top_roi['Specialty']} offers {top_roi['roi_score']:.1f} patient-days saved per additional annual procedure")
+    
+    # Quick wins
+    quick_wins = results_df[(results_df['years_to_target'] < 1) & (results_df['impact_score'] > results_df['impact_score'].median())]
+    if len(quick_wins) > 0:
+        insights.append(f"⚡ **Quick Wins**: {len(quick_wins)} facility-specialty combinations can achieve targets within 1 year")
+    
+    # Resource requirements
+    monthly_increase = params['additional_monthly'] * len(results_df)
+    insights.append(f"📊 **Resource Requirement**: Total of {monthly_increase:,} additional procedures per month across all facilities")
+    
+    # Efficiency gains
+    if params['efficiency_improvement_pct'] > 0:
+        time_saved = results_df['time_saved_per_case'].mean()
+        insights.append(f"⏱️ **Efficiency Gains**: Average {time_saved:.0f} minutes saved per case through process improvements")
+    
+    return insights
+
+# ===== INTERACTIVE DASHBOARD =====
+class WaitlistDashboard:
+    def __init__(self, baseline_data):
+        self.baseline_data = baseline_data
+        self.create_widgets()
+        self.output = widgets.Output()
+        
+    def create_widgets(self):
+        """Create all interactive widgets"""
+        
+        # Scenario parameters
+        self.years_slider = widgets.IntSlider(
+            value=3, min=1, max=10, step=1,
+            description='Timeline (Years):', 
+            style={'description_width': 'initial'}
+        )
+        
+        self.additional_procedures = widgets.IntSlider(
+            value=100, min=0, max=500, step=25,
+            description='Additional Monthly Procedures:', 
+            style={'description_width': 'initial'}
+        )
+        
+        self.capacity_increase = widgets.IntSlider(
+            value=25, min=0, max=100, step=5,
+            description='Capacity Increase %:', 
+            style={'description_width': 'initial'}
+        )
+        
+        self.backlog_reduction = widgets.IntSlider(
+            value=75, min=25, max=100, step=5,
+            description='Backlog Reduction Target %:', 
+            style={'description_width': 'initial'}
+        )
+        
+        self.efficiency_improvement = widgets.IntSlider(
+            value=10, min=0, max=30, step=5,
+            description='Process Efficiency Improvement %:', 
+            style={'description_width': 'initial'}
+        )
+        
+        # Filters
+        self.facility_filter = widgets.SelectMultiple(
+            options=['All'] + sorted(self.baseline_data['Facility'].unique()),
+            value=['All'],
+            description='Facilities:',
+            style={'description_width': 'initial'},
+            rows=5
+        )
+        
+        self.specialty_filter = widgets.SelectMultiple(
+            options=['All'] + sorted(self.baseline_data['Specialty'].unique()),
+            value=['All'],
+            description='Specialties:',
+            style={'description_width': 'initial'},
+            rows=5
+        )
+        
+        self.priority_filter = widgets.SelectMultiple(
+            options=['All'] + sorted(self.baseline_data['priority'].unique()),
+            value=['All'],
+            description='Priority:',
+            style={'description_width': 'initial'}
+        )
+        
+        # Connect observers
+        for widget in [self.years_slider, self.additional_procedures, self.capacity_increase,
+                      self.backlog_reduction, self.efficiency_improvement, self.facility_filter,
+                      self.specialty_filter, self.priority_filter]:
+            widget.observe(self.update_dashboard, names='value')
+    
+    def filter_data(self):
+        """Apply filters to baseline data"""
+        filtered = self.baseline_data.copy()
+        
+        if 'All' not in self.facility_filter.value:
+            filtered = filtered[filtered['Facility'].isin(self.facility_filter.value)]
+            
+        if 'All' not in self.specialty_filter.value:
+            filtered = filtered[filtered['Specialty'].isin(self.specialty_filter.value)]
+            
+        if 'All' not in self.priority_filter.value:
+            filtered = filtered[filtered['priority'].isin(self.priority_filter.value)]
+            
+        return filtered
+    
+    def update_dashboard(self, change=None):
+        """Update dashboard with current parameters"""
+        
+        with self.output:
+            clear_output(wait=True)
+            
+            # Get filtered data
+            filtered_data = self.filter_data()
+            
+            if len(filtered_data) == 0:
+                print("⚠️ No data matches the selected filters. Please adjust your selection.")
+                return
+            
+            # Get parameters
+            params = {
+                'years': self.years_slider.value,
+                'additional_monthly': self.additional_procedures.value,
+                'capacity_increase_pct': self.capacity_increase.value,
+                'backlog_reduction_target': self.backlog_reduction.value,
+                'efficiency_improvement_pct': self.efficiency_improvement.value
+            }
+            
+            # Run simulation
+            results = calculate_advanced_simulation(filtered_data, **params)
+            
+            # Display header
+            display(HTML("<h2>📊 Healthcare Waitlist Simulation Results</h2>"))
+            
+            # Display parameters
+            display(HTML(f"""
+            <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <h3>Scenario Parameters</h3>
+                <ul>
+                    <li><b>Timeline:</b> {params['years']} years</li>
+                    <li><b>Additional Monthly Procedures:</b> {params['additional_monthly']}</li>
+                    <li><b>Capacity Increase:</b> {params['capacity_increase_pct']}%</li>
+                    <li><b>Backlog Reduction Target:</b> {params['backlog_reduction_target']}%</li>
+                    <li><b>Process Efficiency Improvement:</b> {params['efficiency_improvement_pct']}%</li>
+                    <li><b>Filtered to:</b> {len(results)} facility-specialty combinations</li>
+                </ul>
+            </div>
+            """))
+            
+            # Generate and display insights
+            insights = generate_insights(results, params)
+            display(HTML("<h3>💡 Key Insights</h3>"))
+            for insight in insights:
+                display(HTML(f"<p>{insight}</p>"))
+            
+            # Display visualizations
+            display(HTML("<h3>📈 Interactive Visualizations</h3>"))
+            
+            # Wait time comparison
+            wait_chart = create_comprehensive_wait_chart(results)
+            wait_chart.show()
+            
+            # Priority matrix
+            priority_chart = create_priority_matrix(results)
+            priority_chart.show()
+            
+            # Capacity timeline
+            timeline_chart = create_capacity_timeline(results)
+            timeline_chart.show()
+            
+            # ROI heatmap (only if we have enough data)
+            if len(results) > 10:
+                roi_chart = create_roi_heatmap(results)
+                roi_chart.show()
+            
+            # Summary statistics
+            display(HTML("<h3>📊 Summary Statistics</h3>"))
+            
+            summary_stats = pd.DataFrame({
+                'Metric': [
+                    'Total Facilities',
+                    'Total Current Cases',
+                    'Average Current Wait (days)',
+                    'Average Projected Wait (days)',
+                    'Total Capacity Increase (monthly)',
+                    'Average Time to Target (years)',
+                    'Total Patients Benefited',
+                    'Average ROI Score'
+                ],
+                'Value': [
+                    len(results),
+                    f"{results['current_cases'].sum():,}",
+                    f"{results['avg_wait_days'].mean():.1f}",
+                    f"{results['estimated_new_wait_days'].mean():.1f}",
+                    f"{results['capacity_increase'].sum():,}",
+                    f"{results['years_to_target'].mean():.1f}",
+                    f"{results['patients_benefited'].sum():,}",
+                    f"{results['roi_score'].mean():.2f}"
+                ]
+            })
+            
+            display(summary_stats.style.hide(axis='index').set_properties(**{
+                'background-color': '#f9f9f9',
+                'border': '1px solid #ddd',
+                'padding': '8px',
+                'text-align': 'left'
+            }))
+            
+            # Detailed results table
+            display(HTML("<h3>📋 Detailed Results (Top 20 by Impact Score)</h3>"))
+            
+            display_cols = ['Facility', 'Specialty', 'priority', 'current_cases', 
+                           'avg_wait_days', 'estimated_new_wait_days', 'wait_time_reduction_pct',
+                           'years_to_target', 'roi_score', 'impact_score']
+            
+            top_results = results.nlargest(20, 'impact_score')[display_cols].round(1)
+            
+            # Style the dataframe
+            styled_df = top_results.style.background_gradient(subset=['impact_score'], cmap='RdYlGn')\
+                                        .background_gradient(subset=['wait_time_reduction_pct'], cmap='Greens')\
+                                        .format({'wait_time_reduction_pct': '{:.1f}%'})\
+                                        .set_properties(**{'text-align': 'left'})
+            
+            display(styled_df)
+            
+            # Export option
+            display(HTML("""
+            <div style="margin-top: 20px; padding: 10px; background-color: #e8f4f8; border-radius: 5px;">
+                <p><b>💾 Export Options:</b> Results can be exported for further analysis. 
+                Right-click on any chart to save as image.</p>
+            </div>
+            """))
+    
+    def create_layout(self):
+        """Create the dashboard layout"""
+        
+        # Header
+        header = widgets.HTML("""
+        <h1 style="color: #2c3e50;">🏥 Healthcare Waitlist Simulation Dashboard</h1>
+        <p style="color: #7f8c8d;">Interactive what-if analysis for surgical waitlist management across healthcare facilities</p>
+        <hr>
+        """)
+        
+        # Parameters section
+        params_section = widgets.VBox([
+            widgets.HTML("<h3>⚙️ Scenario Parameters</h3>"),
+            widgets.HBox([self.years_slider, self.additional_procedures]),
+            widgets.HBox([self.capacity_increase, self.backlog_reduction]),
+            self.efficiency_improvement
+        ])
+        
+        # Filters section
+        filters_section = widgets.VBox([
+            widgets.HTML("<h3>🔍 Filters</h3>"),
+            widgets.HBox([self.facility_filter, self.specialty_filter, self.priority_filter])
+        ])
+        
+        # Main layout
+        layout = widgets.VBox([
+            header,
+            params_section,
+            filters_section,
+            widgets.HTML("<hr>"),
+            self.output
+        ])
+        
+        return layout
+
+# ===== MAIN EXECUTION =====
+print("\nInitializing dashboard...")
+dashboard = WaitlistDashboard(baseline_data)
+dashboard_layout = dashboard.create_layout()
+
+# Initial update
+dashboard.update_dashboard()
+
+# Display the dashboard
+display(dashboard_layout)
+
+print("""
+================================================================================
+ HEALTHCARE WAITLIST SIMULATION DASHBOARD READY!
+================================================================================
+✓ Advanced simulation engine with efficiency modeling
+✓ Multi-dimensional filtering (facility, specialty, priority)
+✓ Interactive visualizations with drill-down capabilities
+✓ ROI and impact analysis
+✓ Actionable insights generation
+
+📝 Instructions:
+   1. Adjust scenario parameters to model different investment strategies
+   2. Use filters to focus on specific facilities, specialties, or priority areas
+   3. Review the insights section for key findings
+   4. Explore interactive charts - hover for details, zoom for closer look
+   5. Check the detailed results table for specific facility-specialty data
+   
+💡 Tips:
+   - Start with moderate increases (25-50%) to see realistic impacts
+   - Focus on Critical and High Volume priorities for maximum effect
+   - Consider efficiency improvements alongside capacity increases
+   - Use the timeline slider to balance urgency vs. feasibility
+""")
